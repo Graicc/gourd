@@ -13,7 +13,8 @@ export type IOutputShape = TLBaseShape<
 >;
 
 function wrapHTML(html: string) {
-	if (/<script[\s>]/i.test(html)) {
+	// if (/<script[\s>]/i.test(html)) {
+	if (true) {
 		return `<iframe srcdoc="${html.replace(/"/g, '&quot;')}" style="width:100%;height:100%;border:none;"></iframe>`;
 	}
 	return html;
@@ -28,6 +29,14 @@ export class outputShape extends BaseBoxShapeUtil<IOutputShape> {
 		isError: T.optional(T.boolean),
 		html: T.optional(T.string),
 	};
+
+	// Remove associated arrow when an output-shape is deleted
+	static onBeforeDelete(editor: any, shape: IOutputShape) {
+		const arrowId = shape.id.replace(/_output$/, '_arrow');
+		if (editor.getShape(arrowId)) {
+			editor.run(() => editor.deleteShape(arrowId), { ignoreShapeLock: true });
+		}
+	}
 
 	getDefaultProps(): IOutputShape['props'] {
 		return {
@@ -48,12 +57,12 @@ export class outputShape extends BaseBoxShapeUtil<IOutputShape> {
 					borderRadius: 12,
 					boxShadow: '0 0px 12px rgba(0,0,0,0.15)',
 					outline: '1px solid #dddddd',
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'flex-start',
+					overflow: 'hidden',
+					// display: 'flex',
+					// alignItems: 'center',
+					// justifyContent: 'flex-start',
 					padding: 16,
 					color: shape.props.isError ? '#c00' : '#222',
-					fontFamily: 'monospace',
 					fontSize: 16,
 					whiteSpace: 'pre-wrap',
 					wordBreak: 'break-word',

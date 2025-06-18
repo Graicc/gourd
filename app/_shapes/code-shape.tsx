@@ -49,7 +49,7 @@ export class codeShape extends BaseBoxShapeUtil<ICodeShape> {
 				const resultText = html ?? result?.toString() ?? 'nothing';
 				createOutputAndArrow(this.editor, shape, resultText, false, html ?? undefined);
 			} catch (e: any) {
-				const errorText = e.message;
+				const errorText = e.message || e.toString();
 				createOutputAndArrow(this.editor, shape, errorText, true);
 			}
 		};
@@ -113,6 +113,18 @@ export class codeShape extends BaseBoxShapeUtil<ICodeShape> {
 	indicator(shape: ICodeShape) {
 		return <rect width={shape.props.w} height={shape.props.h} />
 	}
+
+	// Remove associated output and arrow shapes when a code-shape is deleted
+	static onBeforeDelete(editor: any, shape: ICodeShape) {
+		const outputShapeId = `${shape.id}_output`;
+		const arrowId = `${shape.id}_arrow`;
+		if (editor.getShape(outputShapeId)) {
+			editor.deleteShape(outputShapeId);
+		}
+		if (editor.getShape(arrowId)) {
+			editor.run(() => editor.deleteShape(arrowId), { ignoreShapeLock: true });
+		}
+	}
 }
 
 function createOutputAndArrow(editor: any, codeShape: any, outputText: string, isError = false, htmlOutput?: string) {
@@ -127,12 +139,10 @@ function createOutputAndArrow(editor: any, codeShape: any, outputText: string, i
 		editor.updateShape({
 			id: outputShapeId,
 			type: 'output-shape',
-			x: outputX,
-			y: outputY,
 			props: {
 				...existingOutput.props,
 				value: outputText,
-				html: htmlOutput,
+				html: htmlOutput ?? '',
 				isError,
 			},
 		});
@@ -144,7 +154,7 @@ function createOutputAndArrow(editor: any, codeShape: any, outputText: string, i
 			y: outputY,
 			props: {
 				value: outputText,
-				html: htmlOutput,
+				html: htmlOutput ?? '',
 				isError,
 			},
 		});

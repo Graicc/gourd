@@ -11,7 +11,7 @@ const customShapeUtils = [codeShape, outputShape]
 const customTools = [CodeShapeTool]
 
 export default function App() {
-  const store = useSyncDemo({ roomId: 'gourd', shapeUtils: customShapeUtils })
+  const store = useSyncDemo({ roomId: 'gourd-4', shapeUtils: customShapeUtils })
 
   return (
     <PyodideProvider>
@@ -26,6 +26,18 @@ export default function App() {
           components={components}
 
           onMount={(editor) => {
+            // Register before-delete handler for code-shape and output-shape
+            editor.sideEffects.registerBeforeDeleteHandler('shape', (shape) => {
+              // alert('test')
+              if (shape.type === 'code-shape' && typeof codeShape.onBeforeDelete === 'function') {
+                codeShape.onBeforeDelete(editor, shape as any);
+              }
+              if (shape.type === 'output-shape' && typeof outputShape.onBeforeDelete === 'function') {
+                outputShape.onBeforeDelete(editor, shape as any);
+              }
+              // Allow deletion
+              return;
+            });
             const hasCodeShape = Array.from(editor.getCurrentPageShapeIds()).some(
               id => editor.getShape(id)?.type === 'code-shape'
             );
@@ -35,14 +47,7 @@ export default function App() {
                 props: {
                   w: 500,
                   h: 170,
-                  code: `import micropip
-await micropip.install("plotly")
-import plotly.graph_objects as go
-
-fig = go.Figure(data=go.Scatter(x=[1, 2, 3], y=[4, 1, 2]))
-fig.update_layout(title='Simple Plot from Pyodide')
-fig
-`
+                  code: `import micropip\nawait micropip.install("plotly")\nimport plotly.graph_objects as go\n\nfig = go.Figure(data=go.Scatter(x=[1, 2, 3], y=[4, 1, 2]))\nfig.update_layout(title='Simple Plot from Pyodide')\nfig\n`
                 }
               });
               editor.centerOnPoint({ x: 500 / 2, y: 170 / 2 })
